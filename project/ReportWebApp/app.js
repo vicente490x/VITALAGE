@@ -54,12 +54,12 @@ const dataField = {
         "Trigliceridi": "mg/dL"
     },
     "Minerali": {
-        "Sodio": "mEq/L",
-        "Potassio": "mEq/L",
-        "Magnesio": "mg/dL",
-        "Cloruri": "mEq/L",
-        "Calcio": "mg/dL",
-        "Fosforo": "mg/dL"
+        "SODIO": "mEq/L",
+        "POTASSIO": "mEq/L",
+        "MAGNESIO": "mg/dL",
+        "CLORURI": "mEq/L",
+        "CALCIO": "mg/dL",
+        "FOSFORO": "mg/dL"
     },
     "AssettoMarziale":{
         "SIDEREMIA": "ug/dl",
@@ -83,43 +83,50 @@ const dataField = {
     },
     "Proteine": {
         "Albuminemia": "g/dL",
-        "Proteine Totali": "g/dL",
-        "Proteine_totali": "%",
+        "Proteine_Totali": "g/dL",
+        "Pro_tot": "%",
         "Albumina": "%",
         "Alfa_1": "%",
         "Alfa_2": "%",
         "Beta_1": "%",
         "Beta_2": "%",
         "Gamma": "%",
-        "Albumina": "%",
-        "Rapporto_A/G": "",
+        "AlbuminaA": "g/dL",
+        "Alfa_1A": "g/dL",
+        "Alfa_2A": "g/dL",
+        "Beta_1A": "g/dL",
+        "Beta_2A": "g/dL",
+        "GammaA": "g/dL",
+        "Rapporto_": "",
+        "note": "",
+        "CMp": "",
+        "CM": "",
+        "Beta2_piccoP": "",
+        "Beta2_picco": "",
         
-       /* 'Alfa 1*': [0.24, 0.70],
-        'Alfa 2*': [0.42, 1.0],
-        'Beta 1*': [0.34, 0.72],
-        'Beta 2*': [0.15, 0.70],
-        'Gamma*': [0.57, 1.56],
-        '': [1.20, 2.06],*/
     },
     "Funzionalità Epatica": {
-        "Transaminasi GOT": "U/L",
-        "Transaminasi GPT": "U/L",
-        "Gamma GT": "U/L",
-        "Fosfatasi Alcalina": "U/L"
+        "Transaminasi_GOT": "U/L",
+        "Transaminasi_GPT": "U/L",
+        "Gamma_GT": "U/L",
+        "Fosfatasi_Alcalina": "U/L"
     },
      "Bilirubina": {
-        "Bilirubina Totale": "mg/dL",
-        "Bilirubina Diretta": "mg/dL",
-        "Bilirubina Indiretta": "mg/dL"
+        "Bilirubina_Totale": "mg/dL",
+        "Bilirubina_Diretta": "mg/dL",
+        "Bilirubina_Indiretta": "mg/dL"
     },
     "Indici di Flogosi": {
         "VES": "mm/h",
         "PCR": "mg/L"
     },
+    "ALtri Esami": {
+        "OMOICISTEINA": "uuol/L"
+    },
     "Esame delle Urine": {
         "Colore": "",
         "Aspetto": "",
-        "Peso Specifico": "",
+        "Peso_Specifico": "",
         "pH": "",
         "Glucosio": "mmol/L",
         "Nitriti": "",
@@ -128,12 +135,15 @@ const dataField = {
         "Chetoni": "mg/dL",
         "Urobilinogeno": "umol/L",
         "Bilirubina": "mg/dL",
-        "Leucociti": "Leu/μL"
+        "Leucociti": "Leu/μL",
+        "EsameMicro":"",
+        "NoteU":""
     },
     "Stress Ossidativo": {
-        "D-ROMS": "Radicali Liberi",
-        "PAT Test": "Potential Antioxidant Test",
-        "OSI Index": "Oxidative Stress Index"
+        "dROMS": "Radicali Liberi",
+        "PAT_Test": "Potential Antioxidant Test",
+        "OSI": "Oxidative Stress Index",
+        "OBRI": "Oxidative Stress Index",
     },
 }
 
@@ -369,7 +379,7 @@ function calculateAndSave() {
         const dRoms = parseFloat(data["D-ROMS"]) || null;
         const aaEpa = parseFloat(data["aa_epa"]) || null;
         const aaDha = parseFloat(data["aa_dha"]) || null;
-        const homaTest = parseFloat(data["HOMA-Test"]) || null;
+        const homaTest = parseFloat(data["HOMA_Test"]) || null;
         const osi = parseFloat(data["OSI-Index"]) || null;
         const pat = parseFloat(data["PAT Test"]) || null;
 
@@ -416,7 +426,7 @@ function generatePDFReport(data) {
     // Ottieni le dimensioni della pagina
     const pageWidth = pdf.internal.pageSize.getWidth(); 
     const pageHeight = pdf.internal.pageSize.getHeight(); 
-    
+
     // Definisci le immagini per le varie pagine
     const images = [
         'referto/page1.jpg', 
@@ -464,139 +474,134 @@ function generatePDFReport(data) {
                 // Aggiungi l'immagine alla pagina corrente
                 pdf.addImage(img, 'JPEG', 0, 0, imgWidth, imgHeight);
 
-                // Se è la prima pagina, aggiungi il testo
+                // Funzione per aggiungere testo con verifica
+                const addText = (text, x, y, fontSize = 12, color = [0, 0, 0]) => {
+                    if (text !== undefined && text !== null) { // Controlla che il testo esista e non sia null
+                        pdf.setFontSize(fontSize);
+                        pdf.setTextColor(...color);
+                        pdf.text(text.toString(), x, y);
+                    }
+                };
+
+                // Aggiungi il testo in base alla pagina corrente
                 if (i === 0) {
-                    const textData = [
-                        { text: data.Name , x: 110, y: 58, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Surname, x: 120, y: 58, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Date_of_Birth, x: 110, y: 65, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Chronological_Age, x: 50, y: 71, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.CF, x: 110, y: 71, fontSize: 12, color: [0, 0, 0] },  
-                        
-                        { text: data.BASO, x: 90, y: 97, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.EOSI, x: 90, y: 104, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.LYMPH, x: 90, y: 111, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MONO, x: 90, y: 118, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.NEUT, x: 90, y: 124, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.WBC, x: 90, y: 130, fontSize: 12, color: [0, 0, 0] },
-
-                        { text: data.NEUT1, x: 90, y: 137, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.LYMPH1, x: 90, y: 144, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MONO1, x: 90, y: 151, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.EOSI1, x: 90, y: 158, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Baso1, x: 90, y: 164, fontSize: 12, color: [0, 0, 0] },
-
-                        { text: data.HTC, x: 90, y: 184, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.HGB, x: 90, y: 191, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MCH, x: 90, y: 197, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MCHC, x: 90, y: 204, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MCV, x: 90, y: 210, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.RBC, x: 90, y: 217, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.RDW_SD, x: 90, y: 224, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.RDW_CV, x: 90, y: 230, fontSize: 12, color: [0, 0, 0] },
-
-                        { text: data.Azotemia, x: 90, y: 250, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Creatina, x: 90, y: 260   , fontSize: 12, color: [0, 0, 0] }
-
-                    ];
-
-                    // Aggiungi il testo alla prima pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    addText(data.Name, 110, 58);
+                    addText(data.Surname, 120, 58);
+                    addText(data.Date_of_Birth, 110, 65);
+                    addText(data.Chronological_Age, 50, 71);
+                    addText(data.CF, 110, 71);
+                    addText(data.BASO, 90, 97);
+                    addText(data.EOSI, 90, 104);
+                    addText(data.LYMPH, 90, 111);
+                    addText(data.MONO, 90, 118);
+                    addText(data.NEUT, 90, 124);
+                    addText(data.WBC, 90, 130);
+                    addText(data.NEUT1, 90, 137);
+                    addText(data.LYMPH1, 90, 144);
+                    addText(data.MONO1, 90, 151);
+                    addText(data.EOSI1, 90, 158);
+                    addText(data.Baso1, 90, 164);
+                    addText(data.HTC, 90, 184);
+                    addText(data.HGB, 90, 191);
+                    addText(data.MCH, 90, 197);
+                    addText(data.MCHC, 90, 204);
+                    addText(data.MCV, 90, 210);
+                    addText(data.RBC, 90, 217);
+                    addText(data.RDW_SD, 90, 224);
+                    addText(data.RDW_CV, 90, 230);
+                    addText(data.Azotemia, 90, 250);
+                    addText(data.Creatina, 90, 260);
                 }
                 if (i === 1) {
-                    const textData = [
-                        { text: data.Uricemia, x: 90, y: 60, fontSize: 12, color: [0, 0, 0] },
-
-                        { text: data.PLT, x: 90, y: 93, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MPV, x: 90, y: 100, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.P_LCR, x: 90, y: 106, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.PCT, x: 90, y: 112, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.PCT, x: 90, y: 119, fontSize: 12, color: [0, 0, 0] },
-                        
-                        { text: data.Colesterolo_Tot, x: 90, y: 140, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Colesterolo_LDL, x: 90, y: 147, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Colesterolo_HDL, x: 90, y: 156, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.Trigliceridi, x: 90, y: 173, fontSize: 12, color: [0, 0, 0] },
-
-                        { text: data.SODIO, x: 90, y: 197, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.POTASSIO, x: 90, y: 203, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.MAGNESIO, x: 90, y: 210, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.CLORURI, x: 90, y: 217, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.CALCIO, x: 90, y: 224, fontSize: 12, color: [0, 0, 0] },
-                        { text: data.FOSFORO, x: 90, y: 230, fontSize: 12, color: [0, 0, 0] },
-
-                    ];
-
-                    // Aggiungi il testo alla seconda pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    addText(data.Uricemia, 90, 60);
+                    addText(data.PLT, 90, 93);
+                    addText(data.MPV, 90, 100);
+                    addText(data.P_LCR, 90, 106);
+                    addText(data.PCT, 90, 112);
+                    addText(data.PDW, 90, 118);
+                    addText(data.Colesterolo_Tot, 90, 140);
+                    addText(data.Colesterolo_LDL, 90, 147);
+                    addText(data.Colesterolo_HDL, 90, 156);
+                    addText(data.Trigliceridi, 90, 173);
+                    addText(data.SODIO, 90, 197);
+                    addText(data.POTASSIO, 90, 203);
+                    addText(data.MAGNESIO, 90, 210);
+                    addText(data.CLORURI, 90, 217);
+                    addText(data.CALCIO, 90, 224);
+                    addText(data.FOSFORO, 90, 230);
+                    addText(data.SIDEREMIA, 90, 255);
+                    addText(data.FERRITINA, 90, 265);
+                    addText(data.TRANSFERRINA, 90, 274);
                 }
                 if (i === 2) {
-                    const textData = [
-                        { text: data.Colore, x: 90, y: 57, fontSize: 12, color: [0, 0, 0] }
-                    ];
-
-                    // Aggiungi il testo alla terza pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    addText(data.Glicemia, 90, 37);
+                    addText(data.Insulina, 90, 44);
+                    addText(data.HOMA_Test, 90, 50);
+                    addText(data.IR_TEST, 90, 62);
+                    addText(data.Albuminemia, 90, 84);
+                    addText(data.Proteine_Totali, 90, 91);
+                    addText(data.Pro_tot , 90, 103);
+                    addText(data.Albumina, 90, 109);
+                    addText(data.Alfa_1, 90, 114);
+                    addText(data.Alfa_2, 90, 119);
+                    addText(data.Beta_1, 90, 125);
+                    addText(data.Beta_2, 90, 130);
+                    addText(data.Gamma, 90, 135);
+                    addText(data.AlbuminaA, 90, 141);
+                    addText(data.Alfa_1A, 90, 146);
+                    addText(data.Alfa_2A, 90, 152);
+                    addText(data.Beta_1A, 90, 157);
+                    addText(data.Beta_2A, 90, 163);
+                    addText(data.GammaA, 90, 168);
+                    addText(data.Rapporto_, 90, 174);
+                    addText(data.note, 90, 180);
+                    addText(data.CMp, 90, 186);
+                    addText(data.CM, 90, 190);
+                    addText(data.Beta2_piccoP, 90, 196);
+                    addText(data.Beta2_picco, 90, 201);
+                    addText(data.Transaminasi_GOT, 90, 223);
+                    addText(data.Transaminasi_GPT, 90, 233);
+                    addText(data.Gamma_GT, 90, 243);
+                    addText(data.Fosfatasi_Alcalina, 90, 252);
+                    addText(data.Bilirubina_Totale, 90, 265);
+                    addText(data.Bilirubina_Diretta, 90, 270);
+                    addText(data.Bilirubina_Indiretta, 90, 275);
                 }
                 if (i === 3) {
-                    const textData = [
-                        { text: data.Colore, x: 90, y: 57, fontSize: 12, color: [0, 0, 0] }
-                    ];
-
-                    // Aggiungi il testo alla quanrta pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    addText(data.VES, 90, 43);
+                    addText(data.PCR, 90, 49);
                 }
                 if (i === 4) {
-                    const textData = [
-                        { text: data.Colore, x: 90, y: 57, fontSize: 12, color: [0, 0, 0] }
-                    ];
+                    addText(data.OMOICISTEINA, 90, 37);
+                    addText(data.Colore, 90, 57);
+                    addText(data.Aspetto, 90, 63);
+                    addText(data.Peso_Specifico, 90, 70);
+                    addText(data.pH, 90, 76);
+                    addText(data.Glucosio, 90, 83);
+                    addText(data.Nitriti, 90, 90);
+                    addText(data.Proteine, 90, 97);
+                    addText(data.Sangue, 90, 103);
+                    addText(data.Chetoni, 90, 110);
+                    addText(data.Urobilinogeno, 90, 116);
+                    addText(data.Bilirubina, 90, 123);
+                    addText(data.Leucociti, 90, 129);
+                    addText(data.EsameMicro, 90, 136);
+                    addText(data.NoteU, 90, 142);
 
-                    // Aggiungi il testo alla quinta pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
                 }
                 if (i === 5) {
-                    const textData = [
-                        { text: data.Colore, x: 90, y: 57, fontSize: 12, color: [0, 0, 0] }
-                    ];
-
-                    // Aggiungi il testo alla sesta pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    addText(data.Name, 110, 35);
+                    addText(data.Surname, 120, 35);
+                    addText(data.Date_of_Birth, 110, 41);
+                    addText(data.Chronological_Age, 50, 48);
+                    addText(data.CF, 110, 48);
+                    addText(data.dROMS, 90, 75);
+                    addText(data.PAT_Test, 90, 102);
+                    addText(data.OSI, 90, 125);
+                    addText(data.OBRI,90, 145);
                 }
                 if (i === 6) {
-                    const textData = [
-                        { text: data.Colore, x: 90, y: 57, fontSize: 12, color: [0, 0, 0] }
-                    ];
-
-                    // Aggiungi il testo alla settima pagina
-                    textData.forEach(item => {
-                        pdf.setFontSize(item.fontSize); // Imposta la dimensione del font
-                        pdf.setTextColor(...item.color); // Imposta il colore del testo
-                        pdf.text(item.text, item.x, item.y); // Aggiungi il testo alla pagina
-                    });
+                    /*non ci sono campi da inserire nella pagina */
                 }
             } catch (error) {
                 console.error("Errore nel caricamento dell'immagine: ", error);
@@ -610,6 +615,7 @@ function generatePDFReport(data) {
     // Chiama la funzione per creare il PDF
     createPDF();
 }
+
 
 
 
